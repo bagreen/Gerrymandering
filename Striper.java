@@ -13,21 +13,45 @@ public class Striper implements Gerrymanderer {
     @Override
     public int[][] gerrymander(Electorate e, boolean party) {
         int d = e.getNumberOfDistricts();
+        int[][] horizontal = new int[d][d];
+        int[][] vertical = new int[d][d];
         int[][] result = new int[d][d];
 
         int i = 0;
         for (int x = 0; x < d; x++) {
             for (int y = 0; y < d; y++) {
                 if (party) {
-                    result[x][y] = i;
-                } else {
-                    result[y][x] = i;
+                    horizontal[x][y] = i;
+                }
+
+                else {
+                    vertical[y][x] = i;
                 }
                 i++;
             }
         }
 
-            for (int[] row : result) {
+        int horizontalCheck = 0, verticalCheck = 0;
+
+        for (int[] row : horizontal) {
+            if (e.winner(row) == party) {
+                horizontalCheck++;
+            }
+        }
+        for (int[] row : vertical) {
+            if (e.winner(row) == party) {
+                verticalCheck++;
+            }
+        }
+
+        if (horizontalCheck > verticalCheck) {
+            result = horizontal.clone();
+        }
+        else {
+            result = vertical.clone();
+        }
+
+        for (int[] row : result) {
             System.out.println(Arrays.toString(row));
         }
 
