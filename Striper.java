@@ -7,52 +7,61 @@
 
 import java.util.ArrayList;
 import java.util.Arrays;
-
 import edu.princeton.cs.algs4.Graph;
 
-/**
- * Baseline Gerrymanderer that divides the electorate into vertical stripes (when gerrymandering for the purple party)
- * or horizontal stripes (when gerrymandering for the yellow party).
- */
 public class Striper implements Gerrymanderer {
-    
-    public int numberOfWinningDistricts(int[][] result, Electorate e, boolean party) {
+
+    private void printArray(int[][] result) {
+        for (int[] row : result) {
+            System.out.println(Arrays.toString(row));
+        }
+    }
+
+    private int numberOfWinningDistricts(int[][] result, Electorate e, boolean party) {
         int numberOfWinningDistricts = 0;
         for (int[] row : result) {
             if (e.winner(row) == party) {
                 numberOfWinningDistricts++;
             }
         }
-        
+
         return numberOfWinningDistricts;
     }
 
-    public int[][] swapCheck(int swap, int[][] result, ArrayList<Integer> ourVoters, Electorate e, boolean party) {
+    private int[][] swapCheck(int swap, int[][] result, ArrayList<Integer> ourVoters, Electorate e, boolean party) {
         // calculates number of winning districts before moving things around
         int winningDistrictsBefore = numberOfWinningDistricts(result, e, party);
-        
+
         // checks all of the voters in the graph
         for (int voter = 0; voter < Math.pow(e.getNumberOfDistricts(), 2); voter++) {
             if (!ourVoters.contains(voter)) {
+                System.out.println("Trying to swap " + swap + " with " + voter);
                 // makes a copy of result so that we don't have an issue with reverting later
-                int[][] copy = result.clone();
-                
+                int[][] copy = new int[result.length][result.length];
+                for(int i = 0; i < result.length; i++) {
+                    for(int j = 0; j < result[i].length; j++) {
+                        copy[i][j] = result[i][j];
+                    }
+                }
+
                 // replaces the swap value with the other party voter and vice versa
                 for (int row[] : copy) {
-                    for (int voterInRow : row) {
-                        if (voterInRow == voter) {
-                            voterInRow = swap;
+                    for (int i = 0; i < row.length; i++) {
+                        if (row[i] == voter) {
+                            row[i] = swap;
                         }
-                        else if (voterInRow == swap) {
-                            voterInRow = voter;
+                        else if (row[i] == swap) {
+                            row[i] = voter;
                         }
                     }
                 }
                 // calculates the number of winners now
                 int winningDistrictsAfter = numberOfWinningDistricts(copy, e, party);
-                
+
                 // changes result to copy if copy is valid and copy has more winning districts
-                if ((e.isValidMap(copy)) && (winningDistrictsBefore < winningDistrictsAfter)) {
+                if (e.isValidMap(copy)) {
+                    System.out.println("CHANGED!");
+                    printArray(copy);
                     result = copy;
                 }
             }
@@ -62,7 +71,7 @@ public class Striper implements Gerrymanderer {
         return result;
     }
 
-    public int difference(int[] row, ArrayList<Integer> ourVoters) {
+    private int difference(int[] row, ArrayList<Integer> ourVoters) {
         int difference = 0;
         for (int i = 0; i < row.length; i++) {
             if (ourVoters.contains(row[i])) {
@@ -75,7 +84,7 @@ public class Striper implements Gerrymanderer {
         return difference;
     }
 
-    public int[][] horizontalOrVertical(Electorate e, boolean party) {
+    private int[][] horizontalOrVertical(Electorate e, boolean party) {
         // finds which is more efficient
         int d = e.getNumberOfDistricts();
         int[][] horizontal = new int[d][d], vertical = new int[d][d], result = new int[d][d];
@@ -118,35 +127,35 @@ public class Striper implements Gerrymanderer {
         System.out.println();
 
         boolean[] voters = e.getVoters();
+
         ArrayList<Integer> ourVoters = new ArrayList<>();
-        ArrayList<Integer> otherVoters = new ArrayList<>();
+
         for (int voter = 0; voter < voters.length; voter++) {
             if (voters[voter] == party) {
                 ourVoters.add(voter);
             }
-            else {
-                otherVoters.add(voter);
-            }
         }
 
         int[][] result = horizontalOrVertical(e, party);
+        printArray(result);
 
-        for (int[] row : result) {
-            System.out.println(Arrays.toString(row));
-        }
-
+        // looking at districts with extra voters in our party and swapping them to other districts
         for (int[] row : result) {
             int difference = difference(row, ourVoters);
+
+            // has an extra voter!
             if (difference > 1) {
                 for (int voter : row) {
                     if (ourVoters.contains(voter)) {
-                        // we found one of our extra voters!
+                        // this is one of our extra voters!
                         result = swapCheck(voter, result, ourVoters, e, party);
                     }
                 }
             }
         }
 
+        System.out.println();
+        printArray(result);
         return result;
     }
 
